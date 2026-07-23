@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Livro de Dívidas - Sistema Restrito</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-primary: #F7F7F5;
+            --bg-secondary: #EFECE6;
+            --bg-card: #FFFFFF;
+            --border-color: #E2E8E4;
+            
+            --cobalt-primary: #0047AB;
+            --cobalt-hover: #003380;
+            --cobalt-light: rgba(0, 71, 171, 0.08);
+
+            --badge-warning-bg: #FFF5EB;
+            --badge-warning-text: #D97706;
+            --badge-danger-bg: #FEE2E2;
+            --badge-danger-text: #DC2626;
+            --badge-success-bg: #E6F4EA;
+            --badge-success-text: #1E8E3E;
+
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --text-dark: #0F172A;
+
+            --sidebar-width: 250px;
+            --sidebar-collapsed: 70px;
+            --transition-speed: 0.3s;
+            --radius-lg: 8px;
+            --radius-md: 6px;
+            --radius-sm: 4px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+
+        /* TELA DE LOGIN ESTILIZADA */
+        #login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-secondary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .login-card {
+            background: #FFFFFF;
+            padding: 32px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        .login-card h2 {
+            font-family: 'Merriweather', serif;
+            font-size: 1.4rem;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+            text-align: center;
+        }
+
+        .login-card p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .login-error {
+            background: var(--badge-danger-bg);
+            color: var(--badge-danger-text);
+            padding: 10px;
+            border-radius: var(--radius-md);
+            font-size: 0.8rem;
+            margin-bottom: 16px;
+            display: none;
+            text-align: center;
+        }
+
+        /* ESTRUTURA DO SISTEMA (ESCONDIDA ATÉ LOGAR) */
+        #app-container {
+            display: none;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: #EFECE6;
+            border-right: 1px solid var(--border-color);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px 12px;
+            transition: width var(--transition-speed) ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar.collapsed { width: var(--sidebar-collapsed); }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 8px;
+            margin-bottom: 20px;
+        }
+
+        .brand-title {
+            font-family: 'Merriweather', serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .toggle-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 4px;
+        }
+
+        .sidebar-search {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-search input {
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 0.82rem;
+            width: 100%;
+            color: var(--text-main);
+        }
+
+        .nav-group-title {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin: 16px 8px 8px 8px;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .nav-item { cursor: pointer; }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            color: var(--text-main);
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .nav-link::before {
+            content: '';
+            width: 5px;
+            height: 5px;
+            background-color: var(--text-muted);
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .nav-link:hover { background: rgba(0, 0, 0, 0.04); }
+
+        .nav-item.active .nav-link {
+            background: var(--cobalt-primary);
+            color: #FFFFFF;
+            font-weight: 600;
+        }
+
+        .nav-item.active .nav-link::before { background-color: #FFFFFF; }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 24px 32px;
+            transition: margin-left var(--transition-speed) ease;
+            max-width: calc(100vw - var(--sidebar-width));
+        }
+
+        .sidebar.collapsed ~ .main-content {
+            margin-left: var(--sidebar-collapsed);
+            max-width: calc(100vw - var(--sidebar-collapsed));
+        }
+
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .top-header h1 {
+            font-family: 'Merriweather', serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .action-buttons { display: flex; gap: 10px; }
+
+        .btn {
+            background: var(--cobalt-primary);
+            color: #FFFFFF;
+            border: 1px solid var(--cobalt-primary);
+            border-radius: var(--radius-md);
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--cobalt-hover);
+            border-color: var(--cobalt-hover);
+        }
+
+        .btn-outline {
+            background: #FFFFFF;
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-outline:hover {
+            background: var(--bg-primary);
+            border-color: var(--text-muted);
+        }
+
+        .btn-danger {
+            background: #FFFFFF;
+            color: var(--badge-danger-text);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-danger:hover {
+            background: var(--badge-danger-bg);
+            border-color: var(--badge-danger-text);
+        }
+
+        .list-search-bar {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            max-width: 300px;
+        }
+
+        .list-search-bar input {
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 0.82rem;
+            width: 100%;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .client-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .client-card:hover {
+            border-color: var(--cobalt-primary);
+            box-shadow: 0 4px 12px rgba(0, 71, 171, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .client-card::after {
+            content: "Clique para analisar ➔";
+            font-size: 0.65rem;
+            color: var(--cobalt-primary);
+            font-weight: 700;
+            text-transform: uppercase;
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .client-card:hover::after { opacity: 1; }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 4px;
+        }
+
+        .card-name {
+            font-family: 'Merriweather', serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .card-phone {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .badge-atrasada {
+            background: var(--badge-warning-bg);
+            color: var(--badge-warning-text);
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .card-divider {
+            border-top: 1px dashed var(--border-color);
+            margin: 8px 0;
+        }
+
+        .card-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+
+        .card-meta { color: var(--text-muted); }
+        .card-value { font-weight: 700; color: var(--text-dark); font-size: 0.9rem; }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+        }
+
+        .kpi-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .card-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .panel-title {
+            font-family: 'Merriweather', serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th {
+            background: var(--bg-primary);
+            padding: 10px 12px;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border-color);
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+        }
+
+        .badge-status {
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        .badge-pago { background: var(--badge-success-bg); color: var(--badge-success-text); }
+        .badge-pendente { background: var(--badge-warning-bg); color: var(--badge-warning-text); }
+        .badge-atrasado { background: var(--badge-danger-bg); color: var(--badge-danger-text); }
+
+        .section-view { display: none; }
+        .section-view.active { display: block; }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.full-width { grid-column: 1 / -1; }
+
+        label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        input, select, textarea {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+            color: var(--text-main);
+            font-size: 0.88rem;
+            outline: none;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--cobalt-primary);
+            box-shadow: 0 0 0 2px var(--cobalt-light);
+        }
+
+        .subfilter-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .subfilter-btn {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .subfilter-btn.active {
+            background: var(--cobalt-light);
+            border-color: var(--cobalt-primary);
+            color: var(--cobalt-primary);
+            font-weight: 600;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(2px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-card {
+            background: #FFFFFF;
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 520px;
+            padding: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            transform: translateY(-20px);
+            transition: transform 0.2s ease;
+        }
+
+        .modal-card.large {
+            max-width: 850px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.active .modal-card { transform: translateY(0); }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .modal-header h3 {
+            font-family: 'Merriweather', serif;
+            font-size: 1.1rem;
+            color: var(--text-dark);
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .select-search-container {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .select-search-bar {
+            margin-bottom: 4px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TELA DE LOGIN EXCLUSIVA PARA O ADMINISTRADOR -->
+    <div id="login-screen">
+        <div class="login-card">
+            <h2>Área Restrita</h2>
+            <p>Entre com os seus dados de Administrador</p>
+            <div id="login-error" class="login-error"></div>
+            <form id="login-form">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label>E-mail do Administrador</label>
+                    <input type="email" id="login-email" placeholder="admin@empresa.com" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>Senha</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%; justify-content: center; padding: 12px;">Entrar no Sistema</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO DO SISTEMA (OCULTO ATÉ REALIZAR O LOGIN) -->
+    <div id="app-container">
+
+        <!-- MODAL / POPUP DE CADASTRO DE CLIENTE -->
+        <div class="modal-overlay" id="client-modal">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-user-plus" style="margin-right:8px; color:var(--cobalt-primary);"></i>Cadastrar Novo Cliente</h3>
+                    <button class="modal-close-btn" onclick="closeClientModal()">&times;</button>
+                </div>
+                <form id="client-form" class="form-grid" style="grid-template-columns: 1fr;">
+                    <div class="form-group">
+                        <label>Nome Completo do Cliente</label>
+                        <input type="text" id="client-name" placeholder="Ex: João da Silva" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Telefone / WhatsApp</label>
+                        <input type="text" id="client-phone" placeholder="Ex: (85) 98888-7777">
+                    </div>
+                    <div class="form-group">
+                        <label>Observação / Endereço</label>
+                        <input type="text" id="client-notes" placeholder="Ex: Rua A, Nº 123">
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                        <button type="button" class="btn btn-outline" onclick="closeClientModal()">Cancelar</button>
+                        <button type="submit" class="btn">Salvar Cliente</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL DE ANÁLISE DE CLIENTE -->
+        <div class="modal-overlay" id="client-analysis-modal">
+            <div class="modal-card large">
+                <div class="modal-header">
+                    <div>
+                        <h3 id="analysis-client-name" style="font-size: 1.25rem;">Nome do Cliente</h3>
+                        <p id="analysis-client-phone" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;"></p>
+                    </div>
+                    <button class="modal-close-btn" onclick="closeAnalysisModal()">&times;</button>
+                </div>
+
+                <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 20px;">
+                    <div class="kpi-card" style="padding: 12px;">
+                        <div class="kpi-label">Pago / Quitado</div>
+                        <div class="kpi-value" id="analysis-kpi-paid" style="color:var(--badge-success-text); font-size:1.1rem;">R$ 0,00</div>
+                    </div>
+                    <div class="kpi-card" style="padding: 12px;">
+                        <div class="kpi-label">Pendente / Atrasado</div>
+                        <div class="kpi-value" id="analysis-kpi-pending" style="color:var(--badge-warning-text); font-size:1.1rem;">R$ 0,00</div>
+                    </div>
+                    <div class="kpi-card" style="padding: 12px;">
+                        <div class="kpi-label">Total Acumulado</div>
+                        <div class="kpi-value" id="analysis-kpi-total" style="font-size:1.1rem;">R$ 0,00</div>
+                    </div>
+                </div>
+
+                <div class="panel-title" style="font-size: 0.95rem; margin-bottom: 12px;">Histórico Completo de Dívidas</div>
+                
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Categoria</th>
+                                <th>Recorrência</th>
+                                <th>Vencimento</th>
+                                <th>Valor Base</th>
+                                <th>Juros/Multa</th>
+                                <th>Valor Total</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="analysis-debts-table"></tbody>
+                    </table>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                    <button class="btn btn-danger" onclick="deleteCurrentClient()">Excluir Cliente</button>
+                    <button class="btn" onclick="closeAnalysisModal()">Fechar Visualização</button>
+                </div>
+            </div>
+        </div>
+
+        <aside class="sidebar" id="sidebar">
+            <div>
+                <div class="sidebar-header">
+                    <span class="brand-title">Livro de Dívidas</span>
+                    <button class="toggle-btn" id="toggleSidebar"><i class="fa-solid fa-chevron-left"></i></button>
+                </div>
+
+                <div class="sidebar-search">
+                    <i class="fa-solid fa-magnifying-glass" style="color:var(--text-muted); font-size:0.8rem;"></i>
+                    <input type="text" id="global-search-input" placeholder="Buscar em tudo...">
+                </div>
+
+                <div class="nav-group-title">Toda Semana</div>
+                <ul class="nav-list">
+                    <li class="nav-item" data-period="domingo"><a class="nav-link"><span>Domingo</span></a></li>
+                    <li class="nav-item" data-period="segunda"><a class="nav-link"><span>Segunda</span></a></li>
+                    <li class="nav-item" data-period="terca"><a class="nav-link"><span>Terça</span></a></li>
+                    <li class="nav-item" data-period="quarta"><a class="nav-link"><span>Quarta</span></a></li>
+                    <li class="nav-item" data-period="quinta"><a class="nav-link"><span>Quinta</span></a></li>
+                    <li class="nav-item" data-period="sexta"><a class="nav-link"><span>Sexta</span></a></li>
+                    <li class="nav-item" data-period="sabado"><a class="nav-link"><span>Sábado</span></a></li>
+                </ul>
+
+                <div class="nav-group-title">Outras Recorrências</div>
+                <ul class="nav-list">
+                    <li class="nav-item" data-period="diario"><a class="nav-link"><span>Diário</span></a></li>
+                    <li class="nav-item active" data-period="semanal"><a class="nav-link"><span>Semanal</span></a></li>
+                    <li class="nav-item" data-period="quinzenal"><a class="nav-link"><span>Quinzenal</span></a></li>
+                    <li class="nav-item" data-period="mensal"><a class="nav-link"><span>Mensal</span></a></li>
+                    <li class="nav-item" data-period="geral"><a class="nav-link"><span>Geral (Tudo)</span></a></li>
+                </ul>
+
+                <div class="nav-group-title">Navegação</div>
+                <ul class="nav-list">
+                    <li class="nav-item active" data-view="dashboard"><a class="nav-link"><span>Clientes</span></a></li>
+                    <li class="nav-item" data-view="dividas"><a class="nav-link"><span>Lançamentos</span></a></li>
+                    <li class="nav-item" data-view="configuracoes"><a class="nav-link"><span>Configurações</span></a></li>
+                </ul>
+            </div>
+
+            <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                <button id="logout-btn" class="btn btn-danger" style="width: 100%; justify-content: center; font-size: 0.8rem;">
+                    <i class="fa-solid fa-right-from-bracket"></i> Sair do Sistema
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <section id="dashboard" class="section-view active">
+                <div class="top-header">
+                    <h1>Clientes e Resumo</h1>
+                    <div class="action-buttons">
+                        <button class="btn btn-outline" onclick="openClientModal()">+ Novo cliente</button>
+                        <button class="btn" onclick="openNewDebtForm()">+ Nova dívida</button>
+                    </div>
+                </div>
+
+                <div class="list-search-bar">
+                    <i class="fa-solid fa-magnifying-glass" style="color:var(--text-muted); font-size:0.8rem;"></i>
+                    <input type="text" id="list-search-input" placeholder="Buscar nesta lista...">
+                </div>
+
+                <div class="subfilter-bar">
+                    <button class="subfilter-btn active" data-category-btn="tudo">Todos</button>
+                    <button class="subfilter-btn" data-category-btn="produtos">Produtos</button>
+                    <button class="subfilter-btn" data-category-btn="alugueis">Aluguéis</button>
+                </div>
+
+                <div class="cards-grid" id="clients-card-grid"></div>
+
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Entrou na Conta</div>
+                        <div class="kpi-value" id="kpi-recebido-val" style="color:var(--badge-success-text);">R$ 0,00</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">A Receber</div>
+                        <div class="kpi-value" id="kpi-areceber-val" style="color:var(--cobalt-primary);">R$ 0,00</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Pendente / Atrasado</div>
+                        <div class="kpi-value" id="kpi-pendente-val" style="color:var(--badge-warning-text);">R$ 0,00</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Total Previsto</div>
+                        <div class="kpi-value" id="kpi-total-val">R$ 0,00</div>
+                    </div>
+                </div>
+
+                <div class="card-panel">
+                    <div class="panel-title">Extrato do Período (<span id="active-period-name">SEMANAL</span>)</div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Cliente / Origem</th>
+                                    <th>Categoria</th>
+                                    <th>Recorrência</th>
+                                    <th>Vencimento</th>
+                                    <th>Valor Base</th>
+                                    <th>Acréscimos</th>
+                                    <th>Valor Atualizado</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="period-debts-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="dividas" class="section-view">
+                <div class="card-panel">
+                    <div class="panel-title">Nova Dívida / Lançamento</div>
+                    <form id="debt-form" class="form-grid">
+                        
+                        <div class="form-group full-width select-search-container">
+                            <label>Selecionar Cliente</label>
+                            <input type="text" id="client-search-select" class="select-search-bar" placeholder="🔍 Digite para buscar cliente na lista abaixo...">
+                            <select id="debt-client-select" required size="4" style="height: auto;">
+                                <option value="" disabled selected>Carregando clientes...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Tipo</label>
+                            <select id="debt-category" required>
+                                <option value="produtos">Produto</option>
+                                <option value="alugueis">Aluguel</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Recorrência / Frequência</label>
+                            <select id="debt-recorrencia" required>
+                                <option value="diario">Diário</option>
+                                <option value="semanal" selected>Semanal</option>
+                                <option value="quinzenal">Quinzenal</option>
+                                <option value="mensal">Mensal</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Descrição</label>
+                            <input type="text" id="debt-notes" placeholder="Ex: Parcela 01 - Notebook">
+                        </div>
+                        <div class="form-group">
+                            <label>Valor da Parcela (R$)</label>
+                            <input type="number" step="0.01" id="debt-amount" placeholder="100.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Data de Vencimento</label>
+                            <input type="date" id="debt-duedate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Regra de Multa por Atraso</label>
+                            <select id="debt-fine-select"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Regra de Juros por Atraso</label>
+                            <select id="debt-interest-select"></select>
+                        </div>
+
+                        <div class="form-group full-width" style="margin-top: 10px;">
+                            <button type="submit" class="btn" style="width: 100%; justify-content: center; padding: 12px;">Salvar Lançamento</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card-panel">
+                    <div class="panel-title">Todas as Dívidas Registradas</div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Cliente / Pagador</th>
+                                    <th>Categoria</th>
+                                    <th>Recorrência</th>
+                                    <th>Vencimento</th>
+                                    <th>Valor Base</th>
+                                    <th>Multa/Juros</th>
+                                    <th>Valor Atualizado</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-debts-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="configuracoes" class="section-view">
+                <div class="form-grid">
+                    <div class="card-panel">
+                        <div class="panel-title">Regras de Juros</div>
+                        <form id="interest-config-form" style="margin-bottom: 16px;">
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <label>Identificador do Juro</label>
+                                <input type="text" id="interest-title" placeholder="Ex: Juros Diários Simples" required>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <label>Tipo de Juros</label>
+                                <select id="interest-type">
+                                    <option value="simple">Juros Simples</option>
+                                    <option value="compound">Juros Compostos</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <label>Periodicidade</label>
+                                <select id="interest-period">
+                                    <option value="daily">Ao Dia</option>
+                                    <option value="monthly">Ao Mês</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label>Taxa em Porcentagem (%)</label>
+                                <input type="number" step="0.01" id="interest-rate" placeholder="Ex: 2 para 2%" required>
+                            </div>
+                            <button type="submit" class="btn btn-outline">+ Adicionar Regra de Juros</button>
+                        </form>
+
+                        <label style="margin-bottom: 8px; display:block;">Juros Ativos:</label>
+                        <div id="interests-list"></div>
+                    </div>
+
+                    <div class="card-panel">
+                        <div class="panel-title">Regras de Multa</div>
+                        <form id="fine-config-form" style="margin-bottom: 16px;">
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <label>Identificador da Multa</label>
+                                <input type="text" id="fine-title" placeholder="Ex: Multa Padrão" required>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label>Taxa em Porcentagem (%)</label>
+                                <input type="number" step="0.01" id="fine-percentage" placeholder="Ex: 5 para 5%" required>
+                            </div>
+                            <button type="submit" class="btn btn-outline">+ Adicionar Regra de Multa</button>
+                        </form>
+
+                        <label style="margin-bottom: 8px; display:block;">Multas Ativas:</label>
+                        <div id="fines-list"></div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MÓDULO FIREBASE + AUTENTICAÇÃO DE LOGIN -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { 
+            getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+  apiKey: "AIzaSyCk97h1UwBTsNRIOEp1wXpU0ESfxGvD2rk",
+  authDomain: "gestaodecobranca-8b7e9.firebaseapp.com",
+  projectId: "gestaodecobranca-8b7e9",
+  storageBucket: "gestaodecobranca-8b7e9.firebasestorage.app",
+  messagingSenderId: "286039804161",
+  appId: "1:286039804161:web:461ab25dc9c3cb93fef300"
+};
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.fb = { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot };
+
+        // CONTROLE DE AUTENTICAÇÃO
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        // ESCUTAR MUDANÇA DE SESSÃO DO USUÁRIO
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loginScreen.style.display = 'none';
+                appContainer.style.display = 'flex';
+                initDataListeners();
+            } else {
+                loginScreen.style.display = 'flex';
+                appContainer.style.display = 'none';
+            }
+        });
+
+        // EFETUAR LOGIN DE ADMINISTRADOR
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                loginError.style.display = 'none';
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (err) {
+                loginError.style.display = 'block';
+                loginError.textContent = 'Acesso negado: e-mail ou senha incorretos.';
+            }
+        });
+
+        // DESLOGAR DO SISTEMA
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth);
+        });
+
+        // INICIALIZAR SINCRONIZAÇÃO EM TEMPO REAL
+        function initDataListeners() {
+            window.fb.onSnapshot(window.fb.collection(window.db, "clientes"), (snapshot) => {
+                state.clients = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderClientOptions();
+                renderApp();
+                if (state.activeAnalysisClientId) renderAnalysisModalContent();
+            });
+
+            window.fb.onSnapshot(window.fb.collection(window.db, "dividas"), (snapshot) => {
+                state.debts = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderApp();
+                if (state.activeAnalysisClientId) renderAnalysisModalContent();
+            });
+
+            window.fb.onSnapshot(window.fb.collection(window.db, "configuracoes_juros"), (snapshot) => {
+                state.settings.interests = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderApp();
+            });
+
+            window.fb.onSnapshot(window.fb.collection(window.db, "configuracoes_multas"), (snapshot) => {
+                state.settings.fines = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderApp();
+            });
+        }
+    </script>
+
+    <!-- REGRAS DA APLICAÇÃO -->
+    <script>
+        let state = {
+            activePeriod: 'semanal',
+            activeCategory: 'tudo',
+            searchTerm: '',
+            activeAnalysisClientId: null,
+            clients: [],
+            debts: [],
+            settings: { interests: [], fines: [] }
+        };
+
+        function reaisToCentavos(val) { return Math.round(parseFloat(val || 0) * 100); }
+        function centavosToReais(cent) { return (cent || 0) / 100; }
+        const formatCurrency = (cent) => centavosToReais(cent).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        function getDayOfCurrentWeekDate(dayIndex) {
+            const d = new Date();
+            const currentDay = d.getDay();
+            const currentDayAdj = currentDay === 0 ? 7 : currentDay;
+            const diff = dayIndex - currentDayAdj;
+            d.setDate(d.getDate() + diff);
+            return d.toISOString().split('T')[0];
+        }
+
+        function openClientModal() {
+            document.getElementById('client-modal').classList.add('active');
+            document.getElementById('client-name').focus();
+        }
+
+        function closeClientModal() {
+            document.getElementById('client-modal').classList.remove('active');
+            document.getElementById('client-form').reset();
+        }
+
+        document.getElementById('client-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newClient = {
+                name: document.getElementById('client-name').value.trim(),
+                phone: document.getElementById('client-phone').value.trim(),
+                notes: document.getElementById('client-notes').value.trim(),
+                createdAt: new Date().toISOString()
+            };
+            await window.fb.addDoc(window.fb.collection(window.db, "clientes"), newClient);
+            closeClientModal();
+            alert('Cliente cadastrado com sucesso!');
+        });
+
+        function openClientAnalysisModal(clientId) {
+            state.activeAnalysisClientId = clientId;
+            renderAnalysisModalContent();
+            document.getElementById('client-analysis-modal').classList.add('active');
+        }
+
+        function closeAnalysisModal() {
+            state.activeAnalysisClientId = null;
+            document.getElementById('client-analysis-modal').classList.remove('active');
+        }
+
+        function renderAnalysisModalContent() {
+            const client = state.clients.find(c => c.id === state.activeAnalysisClientId);
+            if (!client) return;
+
+            document.getElementById('analysis-client-name').textContent = client.name;
+            document.getElementById('analysis-client-phone').textContent = `${client.phone || 'Sem telefone'} ${client.notes ? '• ' + client.notes : ''}`;
+
+            const clientDebts = state.debts.filter(d => d.clientId === client.id);
+            const tableBody = document.getElementById('analysis-debts-table');
+            tableBody.innerHTML = '';
+
+            let paidSum = 0;
+            let pendingSum = 0;
+
+            if (clientDebts.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-muted);">Nenhuma dívida registrada para este cliente.</td></tr>`;
+            }
+
+            clientDebts.forEach(debt => {
+                const calc = calculateDebtDetails(debt);
+
+                if (debt.status === 'pago') {
+                    paidSum += calc.totalCentavos;
+                } else {
+                    pendingSum += calc.totalCentavos;
+                }
+
+                let badgeClass = 'badge-pendente';
+                let statusText = 'Pendente';
+                if (calc.status === 'pago') {
+                    badgeClass = 'badge-pago';
+                    statusText = 'Pago';
+                } else if (calc.status === 'atrasado') {
+                    badgeClass = 'badge-atrasado';
+                    statusText = `Atrasado (${calc.daysOverdue}d)`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span style="font-size:0.75rem; text-transform:uppercase;">${debt.category === 'alugueis' ? 'Aluguel' : 'Produto'}</span></td>
+                    <td><span style="font-size:0.75rem; text-transform:capitalize; color:var(--cobalt-primary); font-weight:600;">${debt.recorrencia || 'semanal'}</span></td>
+                    <td>${formatDate(debt.dueDate)}</td>
+                    <td>${formatCurrency(debt.amountCentavos)}</td>
+                    <td>${formatCurrency(calc.fineCentavos + calc.interestCentavos)}</td>
+                    <td style="font-weight:700;">${formatCurrency(calc.totalCentavos)}</td>
+                    <td><span class="badge-status ${badgeClass}">${statusText}</span></td>
+                    <td>
+                        <button onclick="togglePayment('${debt.id}', '${debt.status}')" style="border:none; background:none; cursor:pointer; margin-right:8px;"><i class="fa-solid ${debt.status === 'pago' ? 'fa-rotate-left' : 'fa-check'}"></i></button>
+                        <button onclick="deleteDebt('${debt.id}')" style="border:none; background:none; cursor:pointer; color:var(--badge-danger-text);"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+
+            document.getElementById('analysis-kpi-paid').textContent = formatCurrency(paidSum);
+            document.getElementById('analysis-kpi-pending').textContent = formatCurrency(pendingSum);
+            document.getElementById('analysis-kpi-total').textContent = formatCurrency(paidSum + pendingSum);
+        }
+
+        async function deleteCurrentClient() {
+            if (!state.activeAnalysisClientId) return;
+            if (confirm('Tem certeza que deseja excluir este cliente?')) {
+                await window.fb.deleteDoc(window.fb.doc(window.db, "clientes", state.activeAnalysisClientId));
+                closeAnalysisModal();
+            }
+        }
+
+        function renderClientOptions(filterText = '') {
+            const select = document.getElementById('debt-client-select');
+            select.innerHTML = '';
+
+            const filteredClients = state.clients.filter(c => 
+                c.name.toLowerCase().includes(filterText.toLowerCase()) || 
+                (c.phone && c.phone.includes(filterText))
+            );
+
+            if (filteredClients.length === 0) {
+                select.innerHTML = '<option value="" disabled>Nenhum cliente encontrado...</option>';
+                return;
+            }
+
+            filteredClients.forEach((client, index) => {
+                const opt = document.createElement('option');
+                opt.value = client.id;
+                opt.textContent = `${client.name} ${client.phone ? '(' + client.phone + ')' : ''}`;
+                if (index === 0 && !filterText) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        document.getElementById('client-search-select').addEventListener('input', (e) => {
+            renderClientOptions(e.target.value);
+        });
+
+        const globalSearchInput = document.getElementById('global-search-input');
+        const listSearchInput = document.getElementById('list-search-input');
+
+        globalSearchInput.addEventListener('input', (e) => {
+            state.searchTerm = e.target.value.toLowerCase().trim();
+            if (listSearchInput) listSearchInput.value = e.target.value;
+            renderApp();
+        });
+
+        listSearchInput.addEventListener('input', (e) => {
+            state.searchTerm = e.target.value.toLowerCase().trim();
+            if (globalSearchInput) globalSearchInput.value = e.target.value;
+            renderApp();
+        });
+
+        const sidebar = document.getElementById('sidebar');
+        document.getElementById('toggleSidebar').addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+
+        function switchView(viewName) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                if (item.getAttribute('data-view')) {
+                    item.classList.toggle('active', item.getAttribute('data-view') === viewName);
+                }
+            });
+            document.querySelectorAll('.section-view').forEach(sec => {
+                sec.classList.toggle('active', sec.id === viewName);
+            });
+            renderApp();
+        }
+
+        function openNewDebtForm() {
+            switchView('dividas');
+            document.getElementById('client-search-select').focus();
+        }
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const view = item.getAttribute('data-view');
+                const period = item.getAttribute('data-period');
+
+                if (view) switchView(view);
+
+                if (period) {
+                    document.querySelectorAll('.nav-item[data-period]').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    state.activePeriod = period;
+                    document.getElementById('active-period-name').textContent = item.textContent.trim().toUpperCase();
+                    renderApp();
+                }
+            });
+        });
+
+        document.querySelectorAll('.subfilter-bar').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.subfilter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.activeCategory = btn.getAttribute('data-category-btn');
+                renderApp();
+            });
+        });
+
+        function calculateDebtDetails(debt) {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            
+            const [year, month, day] = debt.dueDate.split('-').map(Number);
+            const dueDate = new Date(year, month - 1, day);
+            dueDate.setHours(0,0,0,0);
+
+            const diffTime = today - dueDate;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            let status = debt.status || 'pendente';
+            let daysOverdue = 0;
+
+            if (status !== 'pago') {
+                if (diffDays > 0) {
+                    status = 'atrasado';
+                    daysOverdue = diffDays;
+                } else {
+                    status = 'pendente';
+                }
+            }
+
+            let fineCentavos = 0;
+            let interestCentavos = 0;
+
+            if (status === 'atrasado') {
+                if (debt.fineId) {
+                    const fineObj = state.settings.fines.find(f => f.id === debt.fineId);
+                    if (fineObj) {
+                        fineCentavos = Math.round(debt.amountCentavos * (fineObj.percentage / 100));
+                    }
+                }
+
+                if (debt.interestId) {
+                    const interestObj = state.settings.interests.find(i => i.id === debt.interestId);
+                    if (interestObj) {
+                        let rate = interestObj.rate / 100;
+                        let t = daysOverdue;
+                        if (interestObj.period === 'monthly') t = daysOverdue / 30;
+
+                        if (interestObj.type === 'simple') {
+                            interestCentavos = Math.round(debt.amountCentavos * rate * t);
+                        } else {
+                            interestCentavos = Math.round(debt.amountCentavos * (Math.pow(1 + rate, t) - 1));
+                        }
+                    }
+                }
+            }
+
+            return {
+                status,
+                daysOverdue,
+                fineCentavos,
+                interestCentavos,
+                totalCentavos: debt.amountCentavos + fineCentavos + interestCentavos,
+                dueDateObj: dueDate
+            };
+        }
+
+        function getFilteredDebts() {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const weekMap = { segunda: 1, terca: 2, quarta: 3, quinta: 4, sexta: 5, sabado: 6, domingo: 7 };
+
+            return state.debts.filter(debt => {
+                const clientName = debt.clientName || 'Cliente';
+                if (state.searchTerm) {
+                    const matchesName = clientName.toLowerCase().includes(state.searchTerm);
+                    const matchesNotes = (debt.notes || '').toLowerCase().includes(state.searchTerm);
+                    if (!matchesName && !matchesNotes) return false;
+                }
+
+                if (state.activeCategory !== 'tudo' && debt.category !== state.activeCategory) return false;
+
+                const calc = calculateDebtDetails(debt);
+                const dDate = calc.dueDateObj;
+
+                if (state.activePeriod === 'geral') return true;
+                if (state.activePeriod === 'diario') return debt.recorrencia === 'diario';
+                if (state.activePeriod === 'quinzenal') return debt.recorrencia === 'quinzenal';
+
+                if (weekMap[state.activePeriod]) {
+                    return debt.dueDate === getDayOfCurrentWeekDate(weekMap[state.activePeriod]);
+                }
+
+                if (state.activePeriod === 'semanal') {
+                    if (debt.recorrencia === 'semanal') return true;
+                    const first = new Date(today);
+                    const day = today.getDay();
+                    const diffToMon = day === 0 ? -6 : 1 - day;
+                    first.setDate(today.getDate() + diffToMon);
+                    const last = new Date(first);
+                    last.setDate(first.getDate() + 6);
+                    return dDate >= first && dDate <= last;
+                }
+
+                if (state.activePeriod === 'mensal') {
+                    if (debt.recorrencia === 'mensal') return true;
+                    return dDate.getMonth() === today.getMonth() && dDate.getFullYear() === today.getFullYear();
+                }
+
+                return true;
+            });
+        }
+
+        const formatDate = (dateStr) => {
+            if (!dateStr) return '';
+            const [y, m, d] = dateStr.split('-');
+            return `${d}/${m}/${y}`;
+        };
+
+        function renderApp() {
+            renderFinesOptions();
+            renderInterestsOptions();
+            renderClientCards();
+            renderDebtsTables();
+            renderMetrics();
+        }
+
+        function renderClientCards() {
+            const grid = document.getElementById('clients-card-grid');
+            grid.innerHTML = '';
+
+            if (state.clients.length === 0) {
+                grid.innerHTML = `<div style="grid-column: 1/-1; color: var(--text-muted); font-size: 0.85rem;">Nenhum cliente cadastrado. Clique em "+ Novo cliente" para começar.</div>`;
+                return;
+            }
+
+            state.clients.forEach(client => {
+                if (state.searchTerm && !client.name.toLowerCase().includes(state.searchTerm)) return;
+
+                const clientDebts = state.debts.filter(d => d.clientId === client.id);
+                let totalCentavos = 0;
+                let overdueCount = 0;
+
+                clientDebts.forEach(debt => {
+                    const calc = calculateDebtDetails(debt);
+                    totalCentavos += calc.totalCentavos;
+                    if (calc.status === 'atrasado') overdueCount++;
+                });
+
+                const card = document.createElement('div');
+                card.className = 'client-card';
+                card.onclick = () => openClientAnalysisModal(client.id);
+
+                card.innerHTML = `
+                    <div>
+                        <div class="card-top">
+                            <span class="card-name">${client.name}</span>
+                            ${overdueCount > 0 ? `<span class="badge-atrasada">${overdueCount} atrasada(s)</span>` : ''}
+                        </div>
+                        <div class="card-phone"><i class="fa-solid fa-phone" style="font-size:0.7rem;"></i> ${client.phone || 'Sem telefone'}</div>
+                    </div>
+                    <div>
+                        <div class="card-divider"></div>
+                        <div class="card-bottom">
+                            <span class="card-meta">${clientDebts.length} dívida(s)</span>
+                            <span class="card-value">${formatCurrency(totalCentavos)}</span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderFinesOptions() {
+            const finesList = document.getElementById('fines-list');
+            const fineSelect = document.getElementById('debt-fine-select');
+
+            finesList.innerHTML = '';
+            fineSelect.innerHTML = '<option value="">Sem Multa</option>';
+
+            state.settings.fines.forEach(fine => {
+                const item = document.createElement('div');
+                item.style.cssText = 'display:flex; justify-content:space-between; padding:8px; background:var(--bg-primary); margin-bottom:6px; border-radius:4px; font-size:0.82rem;';
+                item.innerHTML = `
+                    <span><strong>${fine.title}</strong> (${fine.percentage}%)</span>
+                    <button onclick="deleteFine('${fine.id}')" style="border:none; background:none; cursor:pointer; color:var(--text-muted);"><i class="fa-solid fa-trash"></i></button>
+                `;
+                finesList.appendChild(item);
+
+                const opt = document.createElement('option');
+                opt.value = fine.id;
+                opt.textContent = `${fine.title} (${fine.percentage}%)`;
+                fineSelect.appendChild(opt);
+            });
+        }
+
+        function renderInterestsOptions() {
+            const interestsList = document.getElementById('interests-list');
+            const interestSelect = document.getElementById('debt-interest-select');
+
+            interestsList.innerHTML = '';
+            interestSelect.innerHTML = '<option value="">Sem Juros</option>';
+
+            state.settings.interests.forEach(interest => {
+                const item = document.createElement('div');
+                item.style.cssText = 'display:flex; justify-content:space-between; padding:8px; background:var(--bg-primary); margin-bottom:6px; border-radius:4px; font-size:0.82rem;';
+                item.innerHTML = `
+                    <span><strong>${interest.title}</strong> (${interest.rate}% ${interest.period === 'daily' ? 'ao dia' : 'ao mês'})</span>
+                    <button onclick="deleteInterest('${interest.id}')" style="border:none; background:none; cursor:pointer; color:var(--text-muted);"><i class="fa-solid fa-trash"></i></button>
+                `;
+                interestsList.appendChild(item);
+
+                const opt = document.createElement('option');
+                opt.value = interest.id;
+                opt.textContent = `${interest.title} (${interest.rate}%)`;
+                interestSelect.appendChild(opt);
+            });
+        }
+
+        function renderDebtsTables() {
+            const periodBody = document.getElementById('period-debts-table');
+            const allBody = document.getElementById('all-debts-table');
+
+            periodBody.innerHTML = '';
+            allBody.innerHTML = '';
+
+            const filteredDebts = getFilteredDebts();
+
+            filteredDebts.forEach((debt) => {
+                const calc = calculateDebtDetails(debt);
+
+                let badgeClass = 'badge-pendente';
+                let statusText = 'Pendente';
+                if (calc.status === 'pago') {
+                    badgeClass = 'badge-pago';
+                    statusText = 'Pago';
+                } else if (calc.status === 'atrasado') {
+                    badgeClass = 'badge-atrasado';
+                    statusText = `Atrasado (${calc.daysOverdue}d)`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${debt.clientName || 'Cliente Indefinido'}</strong></td>
+                    <td><span style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted);">${debt.category === 'alugueis' ? 'Aluguel' : 'Produto'}</span></td>
+                    <td><span style="font-size:0.75rem; text-transform:capitalize; color:var(--cobalt-primary); font-weight:600;">${debt.recorrencia || 'semanal'}</span></td>
+                    <td>${formatDate(debt.dueDate)}</td>
+                    <td>${formatCurrency(debt.amountCentavos)}</td>
+                    <td>${formatCurrency(calc.fineCentavos + calc.interestCentavos)}</td>
+                    <td style="font-weight: 700;">${formatCurrency(calc.totalCentavos)}</td>
+                    <td><span class="badge-status ${badgeClass}">${statusText}</span></td>
+                    <td>
+                        <button onclick="togglePayment('${debt.id}', '${debt.status}')" style="border:none; background:none; cursor:pointer; margin-right:8px;"><i class="fa-solid ${debt.status === 'pago' ? 'fa-rotate-left' : 'fa-check'}"></i></button>
+                        <button onclick="deleteDebt('${debt.id}')" style="border:none; background:none; cursor:pointer; color:var(--badge-danger-text);"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                periodBody.appendChild(tr);
+            });
+
+            state.debts.forEach((debt) => {
+                const calc = calculateDebtDetails(debt);
+                let badgeClass = 'badge-pendente';
+                let statusText = 'Pendente';
+                if (calc.status === 'pago') {
+                    badgeClass = 'badge-pago';
+                    statusText = 'Pago';
+                } else if (calc.status === 'atrasado') {
+                    badgeClass = 'badge-atrasado';
+                    statusText = `Atrasado (${calc.daysOverdue}d)`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${debt.clientName || 'Cliente Indefinido'}</strong></td>
+                    <td><span style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted);">${debt.category === 'alugueis' ? 'Aluguel' : 'Produto'}</span></td>
+                    <td><span style="font-size:0.75rem; text-transform:capitalize; color:var(--cobalt-primary); font-weight:600;">${debt.recorrencia || 'semanal'}</span></td>
+                    <td>${formatDate(debt.dueDate)}</td>
+                    <td>${formatCurrency(debt.amountCentavos)}</td>
+                    <td>${formatCurrency(calc.fineCentavos + calc.interestCentavos)}</td>
+                    <td style="font-weight: 700;">${formatCurrency(calc.totalCentavos)}</td>
+                    <td><span class="badge-status ${badgeClass}">${statusText}</span></td>
+                    <td>
+                        <button onclick="togglePayment('${debt.id}', '${debt.status}')" style="border:none; background:none; cursor:pointer; margin-right:8px;"><i class="fa-solid ${debt.status === 'pago' ? 'fa-rotate-left' : 'fa-check'}"></i></button>
+                        <button onclick="deleteDebt('${debt.id}')" style="border:none; background:none; cursor:pointer; color:var(--badge-danger-text);"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                allBody.appendChild(tr);
+            });
+        }
+
+        function renderMetrics() {
+            const filteredDebts = getFilteredDebts();
+
+            let jaRecebido = 0;
+            let aReceberFuturo = 0;
+            let pendenteAtrasado = 0;
+
+            filteredDebts.forEach(debt => {
+                const calc = calculateDebtDetails(debt);
+                if (debt.status === 'pago') {
+                    jaRecebido += calc.totalCentavos;
+                } else if (calc.status === 'atrasado') {
+                    pendenteAtrasado += calc.totalCentavos;
+                } else {
+                    aReceberFuturo += calc.totalCentavos;
+                }
+            });
+
+            document.getElementById('kpi-recebido-val').textContent = formatCurrency(jaRecebido);
+            document.getElementById('kpi-areceber-val').textContent = formatCurrency(aReceberFuturo);
+            document.getElementById('kpi-pendente-val').textContent = formatCurrency(pendenteAtrasado);
+            document.getElementById('kpi-total-val').textContent = formatCurrency(jaRecebido + aReceberFuturo + pendenteAtrasado);
+        }
+
+        document.getElementById('debt-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const selectClient = document.getElementById('debt-client-select');
+            const selectedClientId = selectClient.value;
+
+            if (!selectedClientId) {
+                alert('Por favor, selecione um cliente na lista.');
+                return;
+            }
+
+            const selectedClientObj = state.clients.find(c => c.id === selectedClientId);
+            const valorEmReais = document.getElementById('debt-amount').value;
+            const amountCentavos = reaisToCentavos(valorEmReais);
+
+            const newDebt = {
+                clientId: selectedClientId,
+                clientName: selectedClientObj ? selectedClientObj.name : 'Cliente Indefinido',
+                category: document.getElementById('debt-category').value,
+                recorrencia: document.getElementById('debt-recorrencia').value,
+                amountCentavos: amountCentavos,
+                dueDate: document.getElementById('debt-duedate').value,
+                fineId: document.getElementById('debt-fine-select').value || null,
+                interestId: document.getElementById('debt-interest-select').value || null,
+                notes: document.getElementById('debt-notes').value,
+                status: 'pendente',
+                createdAt: new Date().toISOString()
+            };
+
+            await window.fb.addDoc(window.fb.collection(window.db, "dividas"), newDebt);
+            document.getElementById('debt-form').reset();
+            renderClientOptions();
+            alert('Lançamento registrado com sucesso!');
+        });
+
+        document.getElementById('interest-config-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newInterest = {
+                title: document.getElementById('interest-title').value,
+                type: document.getElementById('interest-type').value,
+                period: document.getElementById('interest-period').value,
+                rate: parseFloat(document.getElementById('interest-rate').value)
+            };
+            await window.fb.addDoc(window.fb.collection(window.db, "configuracoes_juros"), newInterest);
+            document.getElementById('interest-title').value = '';
+            document.getElementById('interest-rate').value = '';
+        });
+
+        async function deleteInterest(docId) {
+            await window.fb.deleteDoc(window.fb.doc(window.db, "configuracoes_juros", docId));
+        }
+
+        document.getElementById('fine-config-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newFine = {
+                title: document.getElementById('fine-title').value,
+                percentage: parseFloat(document.getElementById('fine-percentage').value)
+            };
+            await window.fb.addDoc(window.fb.collection(window.db, "configuracoes_multas"), newFine);
+            document.getElementById('fine-title').value = '';
+            document.getElementById('fine-percentage').value = '';
+        });
+
+        async function deleteFine(docId) {
+            await window.fb.deleteDoc(window.fb.doc(window.db, "configuracoes_multas", docId));
+        }
+
+        async function togglePayment(docId, currentStatus) {
+            const debtRef = window.fb.doc(window.db, "dividas", docId);
+            await window.fb.updateDoc(debtRef, {
+                status: currentStatus === 'pago' ? 'pendente' : 'pago'
+            });
+        }
+
+        async function deleteDebt(docId) {
+            if (confirm('Deseja realmente excluir este lançamento do Firebase?')) {
+                await window.fb.deleteDoc(window.fb.doc(window.db, "dividas", docId));
+            }
+        }
+    </script>
+</body>
+</html>
